@@ -14,8 +14,7 @@ def get_file_version(path):
     info = win32api.GetFileVersionInfo(path, '\\')
     ms = info['FileVersionMS']
     ls = info['FileVersionLS']
-    return (win32api.HIWORD(ms), win32api.LOWORD(ms),
-            win32api.HIWORD(ls), win32api.LOWORD(ls))
+    return (win32api.HIWORD(ms), win32api.LOWORD(ms), win32api.HIWORD(ls), win32api.LOWORD(ls))
 
 
 if __name__ == '__main__':
@@ -139,7 +138,9 @@ if __name__ == '__main__':
         github_version_string = match[0]
         print(github_version_string)
 
-        if version.parse(dll_version) > version.parse(github_version_string):
+        if version.parse(dll_version) == version.parse(github_version_string):
+            print("Newest version installed")
+        elif version.parse(dll_version) > version.parse(github_version_string):
             print("Newer version installed than on list")
         else:
             print("Update available")
