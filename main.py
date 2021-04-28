@@ -143,9 +143,9 @@ if __name__ == '__main__':
             print("No latest release found")
             continue
 
-        print(response_json[0]["name"])
+        print(response_json[0]["tag_name"])
 
-        match = re.findall(r'(\d+(?:\.\d+)+)', response_json[0]["name"])
+        match = re.findall(r'(\d+(?:\.\d+)+)', response_json[0]["tag_name"])
 
         if len(match) == 0:
             print('Failed to match github version number')
