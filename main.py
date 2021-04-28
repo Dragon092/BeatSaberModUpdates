@@ -12,6 +12,26 @@ logging.basicConfig(level=logging.DEBUG)
 BeatSaber_path = "G:\SteamLibrary\steamapps\common\Beat Saber"
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
 
+class Mod:
+    md5 = None
+    beatmods_name = None
+    version_installed = None
+    version_beatmods = None
+    version_github = None
+    github_username = None
+    github_reponame = None
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.complete_path = BeatSaber_path + "\Plugins\\" + self.filename
+
+        with open(self.complete_path, 'rb') as file:
+            self.md5 = hashlib.md5(file.read()).hexdigest()
+            print(self.md5)
+
+        self.version_installed = ".".join([str(i) for i in get_file_version(self.complete_path)])
+        print(self.version_installed)
+
 
 def get_file_version(path):
     info = win32api.GetFileVersionInfo(path, '\\')
@@ -30,16 +50,7 @@ if __name__ == '__main__':
         if not filename.endswith(".dll"):
             continue
 
-        complete_path = BeatSaber_Plugin_path + "\\" + filename
-
-        print(complete_path)
-
-        with open(complete_path, 'rb') as file:
-            mod_md5 = hashlib.md5(file.read()).hexdigest()
-            print(mod_md5)
-
-        dll_version = ".".join([str(i) for i in get_file_version(complete_path)])
-        print(dll_version)
+        current_mod = Mod(filename)
 
         mod_from_list = None
         mod_from_list_unapproved = None
@@ -50,7 +61,7 @@ if __name__ == '__main__':
         for mod in mods_json:
             for downloads in mod["downloads"]:
                 for hashes in downloads["hashMd5"]:
-                    if hashes["hash"] == mod_md5:
+                    if hashes["hash"] == current_mod.md5:
                         if mod["status"] == "approved":
                             mod_from_list = mod
                             break
@@ -75,7 +86,8 @@ if __name__ == '__main__':
             print("Still not found...")
             continue
 
-        print(mod_from_list["name"]+" ("+mod_from_list["version"]+")")
+        current_mod.beatmods_name = mod_from_list["name"]
+        print(current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
 
 
         newest_mod_from_list = None
@@ -85,14 +97,15 @@ if __name__ == '__main__':
                 if newest_mod_from_list is None or version.parse(mod["version"]) > version.parse(newest_mod_from_list["version"]):
                     newest_mod_from_list = mod
 
-        print(newest_mod_from_list["version"])
+        current_mod.version_beatmods = newest_mod_from_list["version"]
+        print(current_mod.version_beatmods)
 
-        if version.parse(dll_version) == version.parse(newest_mod_from_list["version"]):
-            print("Newest version installed")
-        elif version.parse(dll_version) > version.parse(newest_mod_from_list["version"]):
-            print("Newer version installed than on list")
+        if version.parse(current_mod.version_installed) == version.parse(newest_mod_from_list["version"]):
+            print("ModAssistant: Newest version installed")
+        elif version.parse(current_mod.version_installed) > version.parse(newest_mod_from_list["version"]):
+            print("ModAssistant: Newer version installed than on list")
         else:
-            print("Update available")
+            print("ModAssistant: Update available")
 
         newest_mod_from_list_link = newest_mod_from_list["link"]
 
@@ -119,10 +132,10 @@ if __name__ == '__main__':
 
         # Fix weird entries
         # e.g. https://github.com/kinsi55/CS_BeatSaber_Camera2#camera2
-        github_username = github_username.split('#')[0]
-        github_reponame = github_reponame.split('#')[0]
+        current_mod.github_username = github_username.split('#')[0]
+        current_mod.github_reponame = github_reponame.split('#')[0]
 
-        response = requests.get("https://api.github.com/repos/"+github_username+"/"+github_reponame+"/releases")
+        response = requests.get("https://api.github.com/repos/"+current_mod.github_username+"/"+current_mod.github_reponame+"/releases")
 
         response_json = response.json()
 
@@ -139,11 +152,12 @@ if __name__ == '__main__':
             continue
 
         github_version_string = match[0]
-        print(github_version_string)
+        current_mod.version_github = github_version_string
+        print(current_mod.version_github)
 
-        if version.parse(dll_version) == version.parse(github_version_string):
-            print("Newest version installed")
-        elif version.parse(dll_version) > version.parse(github_version_string):
-            print("Newer version installed than on list")
+        if version.parse(current_mod.version_installed) == version.parse(github_version_string):
+            print("GitHub: Newest version installed")
+        elif version.parse(current_mod.version_installed) > version.parse(github_version_string):
+            print("GitHub: Newer version installed than on list")
         else:
-            print("Update available")
+            print("GitHub: Update available")
