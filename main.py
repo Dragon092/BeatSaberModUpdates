@@ -5,6 +5,9 @@ import hashlib
 import sys
 from packaging import version
 import re
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 BeatSaber_path = "G:\SteamLibrary\steamapps\common\Beat Saber"
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
