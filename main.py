@@ -6,10 +6,11 @@ import sys
 from packaging import version
 import re
 import logging
+from tabulate import tabulate
+import json
 
 logging.basicConfig(level=logging.DEBUG)
 
-BeatSaber_path = "G:\SteamLibrary\steamapps\common\Beat Saber"
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
 
 class Mod:
@@ -52,6 +53,8 @@ if __name__ == '__main__':
 
         current_mod = Mod(filename)
 
+        mods.append(current_mod)
+
         mod_from_list = None
         mod_from_list_unapproved = None
         mod_from_list_file = None
@@ -90,9 +93,12 @@ if __name__ == '__main__':
         print(current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
 
 
-        newest_mod_from_list = None
+        newest_mod_from_list = mod_from_list
 
         for mod in mods_json:
+            if mod["status"] != "approved":
+                continue
+
             if mod["name"] == mod_from_list["name"]:
                 if newest_mod_from_list is None or version.parse(mod["version"]) > version.parse(newest_mod_from_list["version"]):
                     newest_mod_from_list = mod
@@ -121,7 +127,6 @@ if __name__ == '__main__':
         if not link_parts[-3] == "github.com":
             print("No github url found")
             print(newest_mod_from_list_link)
-            sys.exit(1)
             continue
 
         github_username = link_parts[-2]
@@ -136,7 +141,6 @@ if __name__ == '__main__':
         current_mod.github_reponame = github_reponame.split('#')[0]
 
         response = requests.get("https://api.github.com/repos/"+current_mod.github_username+"/"+current_mod.github_reponame+"/releases")
-
         response_json = response.json()
 
         if len(response_json) == 0:
@@ -161,3 +165,21 @@ if __name__ == '__main__':
             print("GitHub: Newer version installed than on list")
         else:
             print("GitHub: Update available")
+
+    tabulate_list = []
+    for mod in mods:
+        mod_append = []
+        #print(mod.filename)
+        mod_append.append(mod.filename)
+        mod_append.append(mod.beatmods_name)
+        if mod.github_username is not None and mod.github_reponame is not None:
+            mod_append.append("https://github.com/"+mod.github_username+"/"+mod.github_reponame)
+        else:
+            mod_append.append("")
+        mod_append.append(mod.version_installed)
+        mod_append.append(mod.version_beatmods)
+        mod_append.append(mod.version_github)
+
+        tabulate_list.append(mod_append)
+
+    print(tabulate(tabulate_list))
