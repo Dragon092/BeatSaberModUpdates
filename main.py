@@ -12,6 +12,15 @@ import json
 logging.basicConfig(level=logging.DEBUG)
 
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
+mods = []
+config = None
+
+try:
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+except IOError:
+    print("Error opening config file")
+    exit(1)
 
 class Mod:
     md5 = None
@@ -24,7 +33,7 @@ class Mod:
 
     def __init__(self, filename):
         self.filename = filename
-        self.complete_path = BeatSaber_path + "\Plugins\\" + self.filename
+        self.complete_path = config["BeatSaber_path"] + "\\Plugins\\" + self.filename
 
         with open(self.complete_path, 'rb') as file:
             self.md5 = hashlib.md5(file.read()).hexdigest()
@@ -42,7 +51,7 @@ def get_file_version(path):
 
 
 if __name__ == '__main__':
-    BeatSaber_Plugin_path = BeatSaber_path + "\Plugins"
+    BeatSaber_Plugin_path = config["BeatSaber_path"] + "\\Plugins"
 
     r = requests.get(url=ModSaberAPI)
     mods_json = r.json()
