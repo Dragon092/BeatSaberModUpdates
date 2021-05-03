@@ -35,7 +35,7 @@ class Mod:
 
     def __init__(self, filename):
         self.filename = filename
-        self.complete_path = config["BeatSaber_path"] + "\\Plugins\\" + self.filename
+        self.complete_path = config["BeatSaber_path"] + "/Plugins/" + self.filename
 
         with open(self.complete_path, 'rb') as file:
             self.md5 = hashlib.md5(file.read()).hexdigest()
@@ -84,7 +84,12 @@ def github_url_to_parts(url):
 
 
 if __name__ == '__main__':
-    BeatSaber_Plugin_path = config["BeatSaber_path"] + "\\Plugins"
+    BeatSaber_Plugin_path = config["BeatSaber_path"] + "/Plugins"
+
+    print("You BeatSaber path is set to:")
+    print(config["BeatSaber_path"])
+    print("Scanning for mods in:")
+    print(BeatSaber_Plugin_path)
 
     r = requests.get(url=ModSaberAPI)
     mods_json = r.json()
