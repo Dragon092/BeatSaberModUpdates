@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.INFO)
 BeatModsAPI = "https://beatmods.com/api/v1/mod"
 mods = []
 config = None
-github = Github()
 disable_github = False
 
 try:
@@ -25,6 +24,12 @@ except IOError:
     print("Error opening config.json file")
     input("press enter to exit")
     exit(1)
+
+if config["GitHub_Token"] == "":
+    github = Github()
+else:
+    github = Github(config["GitHub_Token"])
+
 
 class Mod:
     md5 = None
@@ -214,7 +219,8 @@ if __name__ == '__main__':
 
     if disable_github:
         print("---")
-        print("WARNING: GitHub rate limit reached during scan, so GitHub versions will be (partialy) missing. You need to wait 60 minutes for the limit to reset.")
+        print("WARNING: GitHub rate limit reached during scan, so GitHub versions will be (partialy) missing.")
+        print("You need to wait 60 minutes for the limit to reset or set a GitHub API token in the config.")
         print("---")
 
     # Generate output
