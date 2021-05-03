@@ -9,7 +9,7 @@ import logging
 from tabulate import tabulate
 import json
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
 mods = []
