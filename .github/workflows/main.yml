@@ -29,9 +29,11 @@ jobs:
       with:
         path: src
 
+    - run: cp src/config.json src/dist/windows/config.json
+
     - uses: actions/upload-artifact@v2
       with:
-        name: name-of-artifact
+        name: BeatSaberTool
         path: |
           src/dist/windows
           src/config.json
