@@ -206,6 +206,7 @@ if __name__ == '__main__':
             disable_github = True
             continue
 
+    # Generate output
     tabulate_list = []
     for mod in mods:
         mod_append = []
