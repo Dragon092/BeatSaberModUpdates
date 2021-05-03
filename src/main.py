@@ -12,7 +12,7 @@ from github import Github, RateLimitExceededException
 
 logging.basicConfig(level=logging.INFO)
 
-ModSaberAPI = "https://beatmods.com/api/v1/mod"
+BeatModsAPI = "https://beatmods.com/api/v1/mod"
 mods = []
 config = None
 github = Github()
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     print("Scanning for mods in:")
     print(BeatSaber_Plugin_path)
 
-    r = requests.get(url=ModSaberAPI)
+    r = requests.get(url=BeatModsAPI)
     mods_json = r.json()
 
     for filename in os.listdir(BeatSaber_Plugin_path):
