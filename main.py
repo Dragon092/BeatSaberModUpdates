@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 ModSaberAPI = "https://beatmods.com/api/v1/mod"
 mods = []
 config = None
+github = Github()
 
 try:
     with open('config.json') as config_file:
