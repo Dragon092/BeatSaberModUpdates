@@ -1,3 +1,4 @@
+cffi
 pywin32
 requests
 packaging

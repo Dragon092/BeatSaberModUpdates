@@ -224,3 +224,5 @@ if __name__ == '__main__':
         tabulate_list.append(mod_append)
 
     print(tabulate(tabulate_list))
+
+    input("press enter to exit")
