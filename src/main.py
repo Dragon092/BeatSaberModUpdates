@@ -22,7 +22,8 @@ try:
     with open('config.json') as config_file:
         config = json.load(config_file)
 except IOError:
-    print("Error opening config file")
+    print("Error opening config.json file")
+    input("press enter to exit")
     exit(1)
 
 class Mod:
@@ -94,6 +95,11 @@ if __name__ == '__main__':
 
     r = requests.get(url=BeatModsAPI)
     mods_json = r.json()
+
+    if not os.path.exists(BeatSaber_Plugin_path):
+        print("Error opening plugin path, please make sure that you have set the correct path to your BeatSaber installation in the config.json file")
+        input("press enter to exit")
+        exit(1)
 
     for filename in os.listdir(BeatSaber_Plugin_path):
         if not filename.endswith(".dll"):
@@ -205,6 +211,11 @@ if __name__ == '__main__':
             print("GitHub RateLimitExceededException, you need to wait 60 minutes to try again")
             disable_github = True
             continue
+
+    if disable_github:
+        print("---")
+        print("WARNING: GitHub rate limit reached during scan, so GitHub versions will be (partialy) missing. You need to wait 60 minutes for the limit to reset.")
+        print("---")
 
     # Generate output
     tabulate_list = []
