@@ -8,7 +8,7 @@ import re
 import logging
 from tabulate import tabulate
 import json
-from github import Github
+from github import Github, RateLimitExceededException
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,6 +16,7 @@ ModSaberAPI = "https://beatmods.com/api/v1/mod"
 mods = []
 config = None
 github = Github()
+disable_github = False
 
 try:
     with open('config.json') as config_file:
@@ -170,31 +171,40 @@ if __name__ == '__main__':
             print("No GitHub names found")
             continue
 
-        github_repository = github.get_repo(current_mod.github_username+"/"+current_mod.github_reponame)
-        releases = github_repository.get_releases()
-
-        if releases.totalCount == 0:
-            print("No latest release found")
+        if disable_github:
+            print("Checking GitHub is diabled for this run")
             continue
 
-        print(releases[0].tag_name)
+        try:
+            github_repository = github.get_repo(current_mod.github_username+"/"+current_mod.github_reponame)
+            releases = github_repository.get_releases()
 
-        match = re.findall(r'(\d+(?:\.\d+)+)', releases[0].tag_name)
+            if releases.totalCount == 0:
+                print("No latest release found")
+                continue
 
-        if len(match) == 0:
-            print('Failed to match github version number')
+            print(releases[0].tag_name)
+
+            match = re.findall(r'(\d+(?:\.\d+)+)', releases[0].tag_name)
+
+            if len(match) == 0:
+                print('Failed to match github version number')
+                continue
+
+            github_version_string = match[0]
+            current_mod.version_github = github_version_string
+            print(current_mod.version_github)
+
+            if version.parse(current_mod.version_installed) == version.parse(github_version_string):
+                print("GitHub: Newest version installed")
+            elif version.parse(current_mod.version_installed) > version.parse(github_version_string):
+                print("GitHub: Newer version installed than on list")
+            else:
+                print("GitHub: Update available")
+        except RateLimitExceededException:
+            print("GitHub RateLimitExceededException, you need to wait 60 minutes to try again")
+            disable_github = True
             continue
-
-        github_version_string = match[0]
-        current_mod.version_github = github_version_string
-        print(current_mod.version_github)
-
-        if version.parse(current_mod.version_installed) == version.parse(github_version_string):
-            print("GitHub: Newest version installed")
-        elif version.parse(current_mod.version_installed) > version.parse(github_version_string):
-            print("GitHub: Newer version installed than on list")
-        else:
-            print("GitHub: Update available")
 
     tabulate_list = []
     for mod in mods:
