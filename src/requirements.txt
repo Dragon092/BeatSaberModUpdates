@@ -1,5 +1,5 @@
-pywin32~=300
-requests~=2.25.1
-packaging~=20.9
-tabulate~=0.8.9
-PyGithub~=1.55
+pywin32
+requests
+packaging
+tabulate
+PyGithub
