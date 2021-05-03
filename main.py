@@ -8,6 +8,7 @@ import re
 import logging
 from tabulate import tabulate
 import json
+from github import Github
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,6 +51,37 @@ def get_file_version(path):
     return (win32api.HIWORD(ms), win32api.LOWORD(ms), win32api.HIWORD(ls), win32api.LOWORD(ls))
 
 
+def github_url_to_parts(url):
+    if url[-1] == "/":
+        url = url[0:-1]
+
+    print(url)
+
+    link_parts = url.split('/')
+
+    if len(link_parts) < 3:
+        print("Url split too short")
+        return None, None
+
+    if not link_parts[-3] == "github.com":
+        print("No github url found")
+        print(url)
+        return None, None
+
+    github_username = link_parts[-2]
+    github_reponame = link_parts[-1]
+
+    # Fix weird entries
+    # e.g. https://github.com/kinsi55/CS_BeatSaber_Camera2#camera2
+    github_username = github_username.split('#')[0]
+    github_reponame = github_reponame.split('#')[0]
+
+    print(github_username)
+    print(github_reponame)
+
+    return github_username, github_reponame
+
+
 if __name__ == '__main__':
     BeatSaber_Plugin_path = config["BeatSaber_path"] + "\\Plugins"
 
@@ -75,15 +107,19 @@ if __name__ == '__main__':
                 for hashes in downloads["hashMd5"]:
                     if hashes["hash"] == current_mod.md5:
                         if mod["status"] == "approved":
+                            # We found a approved mod with the exact hash
                             mod_from_list = mod
                             break
                         elif mod_from_list_unapproved is None:
+                            # We found any mod with the exact hash
                             mod_from_list_unapproved = mod
 
                     if hashes["file"] == "Plugins/" + filename:
                         if mod["status"] == "approved" and mod_from_list_file is None:
+                            # We found a approved mod with the filename
                             mod_from_list_file = mod
                         elif mod_from_list_file_unapproved is None:
+                            # We found any mod with the filename
                             mod_from_list_file_unapproved = mod
 
         if not mod_from_list:
@@ -99,7 +135,7 @@ if __name__ == '__main__':
             continue
 
         current_mod.beatmods_name = mod_from_list["name"]
-        print(current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
+        print("Found BeatMods: "+current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
 
 
         newest_mod_from_list = mod_from_list
@@ -116,49 +152,28 @@ if __name__ == '__main__':
         print(current_mod.version_beatmods)
 
         if version.parse(current_mod.version_installed) == version.parse(newest_mod_from_list["version"]):
-            print("ModAssistant: Newest version installed")
+            print("BeatMods: Newest version installed")
         elif version.parse(current_mod.version_installed) > version.parse(newest_mod_from_list["version"]):
-            print("ModAssistant: Newer version installed than on list")
+            print("BeatMods: Newer version installed than on list")
         else:
-            print("ModAssistant: Update available")
+            print("BeatMods: Update available")
 
-        newest_mod_from_list_link = newest_mod_from_list["link"]
+        current_mod.github_username, current_mod.github_reponame = github_url_to_parts(newest_mod_from_list["link"])
 
-        if newest_mod_from_list_link[-1] == "/":
-            newest_mod_from_list_link = newest_mod_from_list_link[0:-1]
-
-        print(newest_mod_from_list_link)
-
-        link_parts = newest_mod_from_list_link.split('/')
-
-        #if(len(link_parts))
-
-        if not link_parts[-3] == "github.com":
-            print("No github url found")
-            print(newest_mod_from_list_link)
+        if current_mod.github_username is None or current_mod.github_reponame is None:
+            print("No GitHub names found")
             continue
 
-        github_username = link_parts[-2]
-        github_reponame = link_parts[-1]
+        github_repository = github.get_repo(current_mod.github_username+"/"+current_mod.github_reponame)
+        releases = github_repository.get_releases()
 
-        print(github_username)
-        print(github_reponame)
-
-        # Fix weird entries
-        # e.g. https://github.com/kinsi55/CS_BeatSaber_Camera2#camera2
-        current_mod.github_username = github_username.split('#')[0]
-        current_mod.github_reponame = github_reponame.split('#')[0]
-
-        response = requests.get("https://api.github.com/repos/"+current_mod.github_username+"/"+current_mod.github_reponame+"/releases")
-        response_json = response.json()
-
-        if len(response_json) == 0:
+        if releases.totalCount == 0:
             print("No latest release found")
             continue
 
-        print(response_json[0]["tag_name"])
+        print(releases[0].tag_name)
 
-        match = re.findall(r'(\d+(?:\.\d+)+)', response_json[0]["tag_name"])
+        match = re.findall(r'(\d+(?:\.\d+)+)', releases[0].tag_name)
 
         if len(match) == 0:
             print('Failed to match github version number')
