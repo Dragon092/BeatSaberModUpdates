@@ -21,14 +21,15 @@ try:
     with open('config.json') as config_file:
         config = json.load(config_file)
 except IOError:
-    print("Error opening config.json file")
+    logging.error("Error opening config.json file")
     input("press enter to exit")
     exit(1)
 
+# Fix config values
 if config["GitHub_Token"] == "":
-    github = Github()
-else:
-    github = Github(config["GitHub_Token"])
+    config["GitHub_Token"] = None
+
+github = Github(config["GitHub_Token"])
 
 
 class Mod:
@@ -46,10 +47,10 @@ class Mod:
 
         with open(self.complete_path, 'rb') as file:
             self.md5 = hashlib.md5(file.read()).hexdigest()
-            print(self.md5)
+            logging.debug("md5: "+self.md5)
 
         self.version_installed = ".".join([str(i) for i in get_file_version(self.complete_path)])
-        print(self.version_installed)
+        logging.debug("version_installed: "+self.version_installed)
 
 
 def get_file_version(path):
@@ -63,17 +64,17 @@ def github_url_to_parts(url):
     if url[-1] == "/":
         url = url[0:-1]
 
-    print(url)
+    logging.debug("url: "+url)
 
     link_parts = url.split('/')
 
     if len(link_parts) < 3:
-        print("Url split too short")
+        logging.error("Url split too short")
         return None, None
 
     if not link_parts[-3] == "github.com":
-        print("No github url found")
-        print(url)
+        logging.error("No github url found")
+        logging.error(url)
         return None, None
 
     github_username = link_parts[-2]
@@ -84,8 +85,8 @@ def github_url_to_parts(url):
     github_username = github_username.split('#')[0]
     github_reponame = github_reponame.split('#')[0]
 
-    print(github_username)
-    print(github_reponame)
+    logging.debug("github_username: "+github_username)
+    logging.debug("github_reponame: "+github_reponame)
 
     return github_username, github_reponame
 
@@ -102,12 +103,13 @@ if __name__ == '__main__':
     mods_json = r.json()
 
     if not os.path.exists(BeatSaber_Plugin_path):
-        print("Error opening plugin path, please make sure that you have set the correct path to your BeatSaber installation in the config.json file")
+        logging.error("Error opening plugin path, please make sure that you have set the correct path to your BeatSaber installation in the config.json file")
         input("press enter to exit")
         exit(1)
 
     for filename in os.listdir(BeatSaber_Plugin_path):
         if not filename.endswith(".dll"):
+            #logging.debug("Ignoring "+filename)
             continue
 
         current_mod = Mod(filename)
@@ -149,11 +151,11 @@ if __name__ == '__main__':
                 mod_from_list = mod_from_list_file_unapproved
 
         if not mod_from_list:
-            print("Still not found...")
+            logging.warning("Could not find a matching BeatMods entry for "+filename)
             continue
 
         current_mod.beatmods_name = mod_from_list["name"]
-        print("Found BeatMods: "+current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
+        logging.info("Found BeatMods: "+current_mod.beatmods_name+" ("+mod_from_list["version"]+")")
 
 
         newest_mod_from_list = mod_from_list
@@ -167,23 +169,23 @@ if __name__ == '__main__':
                     newest_mod_from_list = mod
 
         current_mod.version_beatmods = newest_mod_from_list["version"]
-        print(current_mod.version_beatmods)
+        logging.info("Found newest BeatMods version: "+current_mod.version_beatmods)
 
         if version.parse(current_mod.version_installed) == version.parse(newest_mod_from_list["version"]):
-            print("BeatMods: Newest version installed")
+            logging.info("BeatMods: Newest version installed")
         elif version.parse(current_mod.version_installed) > version.parse(newest_mod_from_list["version"]):
-            print("BeatMods: Newer version installed than on list")
+            logging.info("BeatMods: Newer version installed than on list")
         else:
-            print("BeatMods: Update available")
+            logging.info("BeatMods: Update available")
 
         current_mod.github_username, current_mod.github_reponame = github_url_to_parts(newest_mod_from_list["link"])
 
         if current_mod.github_username is None or current_mod.github_reponame is None:
-            print("No GitHub names found")
+            logging.warning("No GitHub names found")
             continue
 
         if disable_github:
-            print("Checking GitHub is diabled for this run")
+            logging.warning("Checking GitHub is diabled for this run")
             continue
 
         try:
@@ -191,43 +193,43 @@ if __name__ == '__main__':
             releases = github_repository.get_releases()
 
             if releases.totalCount == 0:
-                print("No latest release found")
+                logging.warning("No latest release found")
                 continue
 
-            print(releases[0].tag_name)
+            logging.debug(releases[0].tag_name)
 
             match = re.findall(r'(\d+(?:\.\d+)+)', releases[0].tag_name)
 
             if len(match) == 0:
-                print('Failed to match github version number')
+                logging.warning("Failed to match github version number: "+releases[0].tag_name)
                 continue
 
             github_version_string = match[0]
             current_mod.version_github = github_version_string
-            print(current_mod.version_github)
+            logging.debug("version_github: "+current_mod.version_github)
 
             if version.parse(current_mod.version_installed) == version.parse(github_version_string):
-                print("GitHub: Newest version installed")
+                logging.info("GitHub: Newest version installed")
             elif version.parse(current_mod.version_installed) > version.parse(github_version_string):
-                print("GitHub: Newer version installed than on list")
+                logging.info("GitHub: Newer version installed than on list")
             else:
-                print("GitHub: Update available")
+                logging.info("GitHub: Update available")
         except RateLimitExceededException:
-            print("GitHub RateLimitExceededException, you need to wait 60 minutes to try again")
+            logging.error("GitHub RateLimitExceededException, you need to wait 60 minutes to try again")
             disable_github = True
             continue
 
     if disable_github:
-        print("---")
-        print("WARNING: GitHub rate limit reached during scan, so GitHub versions will be (partialy) missing.")
-        print("You need to wait 60 minutes for the limit to reset or set a GitHub API token in the config.")
-        print("---")
+        logging.warning("---")
+        logging.warning("WARNING: GitHub rate limit reached during scan, so GitHub versions will be (partialy) missing.")
+        logging.warning("You need to wait 60 minutes for the limit to reset or set a GitHub API token in the config.")
+        logging.warning("---")
 
     # Generate output
     tabulate_list = []
     for mod in mods:
         mod_append = []
-        #print(mod.filename)
+        #logging.debug(mod.filename)
         mod_append.append(mod.filename)
         mod_append.append(mod.beatmods_name)
         if mod.github_username is not None and mod.github_reponame is not None:
