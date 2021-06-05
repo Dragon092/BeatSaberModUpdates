@@ -242,6 +242,6 @@ if __name__ == '__main__':
 
         tabulate_list.append(mod_append)
 
-    print(tabulate(tabulate_list))
+    print(tabulate(tabulate_list, headers=["Filename", "Name", "GitHub URL", "File Version", "BeatMods Version", "GitHub Version"]))
 
     input("press enter to exit")
