@@ -11,6 +11,7 @@ import json
 from github import Github, RateLimitExceededException
 from urllib.parse import urlparse
 from pprint import pprint
+import colorama
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -235,11 +236,29 @@ if __name__ == '__main__':
             mod_append.append("https://github.com/"+mod.github_username+"/"+mod.github_reponame)
         else:
             mod_append.append("")
-        mod_append.append(mod.version_installed)
-        mod_append.append(mod.version_beatmods)
-        mod_append.append(mod.version_github)
+
+        mod_append.append(colorama.Back.GREEN + mod.version_installed + colorama.Back.RESET)
+
+        if not mod.version_beatmods is None:
+            if version.parse(mod.version_installed) >= version.parse(mod.version_beatmods):
+                mod_append.append(colorama.Back.GREEN + mod.version_beatmods + colorama.Back.RESET)
+            else:
+                mod_append.append(colorama.Back.RED + mod.version_beatmods + colorama.Back.RESET)
+        else:
+            mod_append.append(colorama.Back.YELLOW + "Unknown" + colorama.Back.RESET)
+
+        if not mod.version_github is None:
+            if version.parse(mod.version_installed) >= version.parse(mod.version_github):
+                mod_append.append(colorama.Back.GREEN + mod.version_github + colorama.Back.RESET)
+            else:
+                mod_append.append(colorama.Back.RED + mod.version_github + colorama.Back.RESET)
+        else:
+            mod_append.append(colorama.Back.YELLOW + "Unknown" + colorama.Back.RESET)
 
         tabulate_list.append(mod_append)
+
+    # init colorama
+    colorama.init()
 
     print(tabulate(tabulate_list, headers=["Filename", "Name", "GitHub URL", "File Version", "BeatMods Version", "GitHub Version"]))
 

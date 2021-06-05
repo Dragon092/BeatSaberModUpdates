@@ -3,3 +3,4 @@ requests
 packaging
 tabulate
 PyGithub
+colorama
