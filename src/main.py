@@ -9,6 +9,8 @@ import logging
 from tabulate import tabulate
 import json
 from github import Github, RateLimitExceededException
+from urllib.parse import urlparse
+from pprint import pprint
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,29 +63,26 @@ def get_file_version(path):
 
 
 def github_url_to_parts(url):
-    if url[-1] == "/":
-        url = url[0:-1]
 
     logging.debug("url: "+url)
 
-    link_parts = url.split('/')
+    url_parsed = urlparse(url)
 
-    if len(link_parts) < 3:
-        logging.error("Url split too short")
-        return None, None
+    logging.debug("url_parsed.path: "+url_parsed.path)
+    link_parts = url_parsed.path.split("/")
 
-    if not link_parts[-3] == "github.com":
+    if not url_parsed.netloc == "github.com":
         logging.error("No github url found")
         logging.error(url)
         return None, None
 
-    github_username = link_parts[-2]
-    github_reponame = link_parts[-1]
+    if len(link_parts) < 2:
+        logging.error("Url split too short")
+        return None, None
 
-    # Fix weird entries
-    # e.g. https://github.com/kinsi55/CS_BeatSaber_Camera2#camera2
-    github_username = github_username.split('#')[0]
-    github_reponame = github_reponame.split('#')[0]
+    # link_parts[0] is empty because the string start with a /
+    github_username = link_parts[1]
+    github_reponame = link_parts[2]
 
     logging.debug("github_username: "+github_username)
     logging.debug("github_reponame: "+github_reponame)
