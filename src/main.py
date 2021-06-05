@@ -12,7 +12,7 @@ from github import Github, RateLimitExceededException
 from urllib.parse import urlparse
 from pprint import pprint
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 BeatModsAPI = "https://beatmods.com/api/v1/mod"
 mods = []
