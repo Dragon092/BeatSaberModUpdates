@@ -8,6 +8,7 @@ import re
 import logging
 from tabulate import tabulate
 import json
+from json import JSONDecodeError
 from github import Github, RateLimitExceededException
 from urllib.parse import urlparse
 from pprint import pprint
@@ -22,9 +23,16 @@ disable_github = False
 
 try:
     with open('config.json') as config_file:
-        config = json.load(config_file)
+        config_file_content = config_file.read()
+        # Allow backslashes in the config file without raising an error
+        config_file_content = config_file_content.replace("\\", "/")
+        config = json.loads(config_file_content)
 except IOError:
     logging.error("Error opening config.json file")
+    input("press enter to exit")
+    exit(1)
+except JSONDecodeError:
+    logging.error("Error reading config.json file")
     input("press enter to exit")
     exit(1)
 
